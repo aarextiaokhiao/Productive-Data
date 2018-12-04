@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<title>Productive Data: U.I. testing</title>
+		<link rel="stylesheet" type="text/css" href="css/theme.css">
+		<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
+		<script type="text/javascript" src="js/core.js"></script>
+		<script type="text/javascript" src="js/load.js"></script>
+		<script type="text/javascript" src="js/tabs.js"></script>
+	</head>
+	<body onload="initGame()">
+		<div class="box topleft">
+			<div class="currencies">
+				<div class="currency">
+					<div class="amount" id="bits"><b>Bits</b>: 0 / 0</div>
+					<button class="produce" id="produce_bits" onclick="produce('bits')">Produce</button>
+				</div>
+				<div class="currency">
+					<div class="amount" id="bytes"><b>Bytes</b>: 0</div>
+					<button class="produce" id="produce_bytes" onclick="produce('bytes')">Produce</button>
+				</div>
+			</div>
+		</div>
+		<div class="box bottomleft">
+			<div class="boxInside tabButtons">
+				<button onclick="switchTab('upgrades')">Upgrades</button>
+				<button>Statistics (coming soon)</button>
+				<button>Options (coming soon)</button>
+				<button onclick="switchTab('about')">About</button>
+			</div>
+		</div>
+		<div class="box right">
+			<div class="boxInside">
+				<div class="tab" id="tab_upgrades" style="display: block">
+				</div>
+				<div class="tab" id="tab_about">
+					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>U.I. testing<br><br>
+					<a href="https://aarextiaokhiao.github.io/">Home</a><br>
+					<a>Changelog</a> (coming soon)<br>
+					<a href="http://disoord.gg/h9mDese">Discord</a> (leads to NG+3 server temporarily)
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

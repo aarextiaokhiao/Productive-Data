@@ -1,0 +1,89 @@
+body {
+	background: black;
+	color: #00ff00;
+	font-size: 24px;
+	font-family: 'Inconsolata', monospace;
+	margin: 0
+}
+div {
+	margin: 0
+}
+a { 
+	color: #00ff00
+}
+button {
+	background: #000000;
+	border: 2px solid #00ff00;
+	color: #00ff00;
+	font-size: 24px;
+	font-family: 'Inconsolata', monospace;
+	transition-duration: 0.2s
+}
+button:hover {
+	background: #00ff00;
+	color: #000000
+}
+.box {
+	position: fixed;
+	border: 2px solid #00ff00;
+}
+.topleft {
+	position: relative;
+	left: 4px;
+	top: 4px;
+	width: calc(40% - 12px);
+	height: calc(40% - 12px)
+}
+.bottomleft {
+	left: 4px;
+	bottom: 4px;
+	width: calc(40% - 12px);
+	height: calc(60% - 12px)
+}
+.right {
+	right: 4px;
+	top: 4px;
+	width: calc(60% - 12px);
+	height: calc(100% - 12px)
+}
+.boxInside {
+	position: absolute;
+	left: 6px;
+	top: 6px;
+	width: calc(100% - 12px);
+	height: calc(100% - 12px);
+	text-align: center;
+	overflow-y: scroll
+}
+.currencies {
+	position: absolute;
+	left: 50%;
+	bottom: 50%;
+	transform: translate(-50%,50%);
+	font-size: 24px;
+	text-align: center
+}
+.currency {
+	position: relative;
+	width: 480px;
+	height: 36px
+}
+.amount {
+	position: absolute;
+	left: 4px;
+	top: 4px;
+}
+.produce {
+	position: absolute;
+	right: 4px;
+	top: 4px;
+	width: 150px;
+	height: 32px;
+}
+.tabButtons button {
+	width: calc(100% - 24px);
+	margin-bottom: 4px
+}
+.tab {
+	display: none
+}
