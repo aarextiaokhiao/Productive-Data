@@ -1,17 +1,17 @@
 <html>
 	<head>
-		<title>Productive Data: U.I. testing</title>
+		<title>Productive Data v0.1.1.0</title>
 		<link rel="stylesheet" type="text/css" href="css/theme.css">
 		<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
 		<script type="text/javascript" src="js/core.js"></script>
 		<script type="text/javascript" src="js/load.js"></script>
 		<script type="text/javascript" src="js/tabs.js"></script>
 	</head>
-	<body onload="initGame()">
+	<body class="normal-theme" onload="init_game()">
 		<div class="box topleft">
 			<div class="currencies">
 				<div class="currency">
-					<div class="amount" id="bits"><b>Bits</b>: 0 / 0</div>
+					<div class="amount" id="bits"><b>Bits</b>: 0 / 32</div>
 					<button class="produce" id="produce_bits" onclick="produce('bits')">Produce</button>
 				</div>
 				<div class="currency">
@@ -22,21 +22,69 @@
 		</div>
 		<div class="box bottomleft">
 			<div class="boxInside tabButtons">
-				<button onclick="switchTab('upgrades')">Upgrades</button>
-				<button>Statistics (coming soon)</button>
-				<button>Options (coming soon)</button>
-				<button onclick="switchTab('about')">About</button>
+				<button onclick="switch_tab('upgrades')">Upgrades</button>
+				<button onclick="switch_tab('statistics')">Statistics</button>
+				<button onclick="switch_tab('options')">Options</button>
+				<button onclick="switch_tab('about')">About</button>
 			</div>
 		</div>
 		<div class="box right">
 			<div class="boxInside">
-				<div class="tab" id="tab_upgrades" style="display: block">
+				<div class="tab" id="tab_stuck" style="display: block">
+					If you are seeing this sentence for few seconds, please reload or export your save!<br>
+					<button onclick="document.location.reload(true)">Reload</button>
+					<button onclick="export_save_safe()">Export</button>
+					<div id='exported_save_safe'>Here is your exported save. You can share it for reporting bugs.<br><textarea id='exported_save_safe_text' readonly></textarea></div>
+				</div>
+				<div class="tab" id="tab_upgrades">
+					<div class="upgrade">
+						<div class="upgrade_effect" id="upgrade_1"></div>
+						<button class="upgrade_button" id="upgrade_1_button" onclick="buy_upgrade(1)"></button>
+					</div><div class="upgrade">
+						<div class="upgrade_effect" id="upgrade_2"></div>
+						<button class="upgrade_button" id="upgrade_2_button" onclick="buy_upgrade(2)"></button>
+					</div><div class="upgrade">
+						<div class="upgrade_effect" id="upgrade_3"></div>
+						<button class="upgrade_button" id="upgrade_3_button" onclick="buy_upgrade(3)"></button>
+					</div>
+				</div>
+				<div class="tab" id="tab_statistics">
+					<table align=center>
+						<tr>
+							<td>Playtime:</td>
+							<td id="playtime">0.0 seconds</td>
+						</tr>
+						<tr>
+							<td>Total bits gained:</td>
+							<td id="total_bits">0</td>
+						</tr>
+						<tr>
+							<td>Total bytes gained:</td>
+							<td id="total_bytes">0</td>
+						</tr>
+					</table>
+				</div>
+				<div class="tab" id="tab_options">
+					<b style="font-size: 48px">Saving</b><br>
+					<table align=center><tr>
+						<td><button class="option" onclick="save_game()">Save</button></td>
+						<td><button class="option" onclick="export_save()">Export</button></td>
+						<td><button class="option" onclick="import_save()">Import</button></td>
+						<td><button class="option" onclick="hard_reset()">HARD RESET</button></td>
+					</tr></table>
+					<div id='exported_save'>Here is your exported save. You can share it for reporting bugs.<br><textarea id='exported_save_text' readonly></textarea></div>
+					<b style="font-size: 48px">Display</b><br>
+					<table align=center><tr>
+						<td><button class="option" id="tick_rate" onclick="change_tick_rate()"></button></td>
+						<td><button class="option" id="theme" onclick="change_theme()"></button></td>
+						<td><button class="option" id="notation" onclick="change_notation()"></button></td>
+					</tr></table>
 				</div>
 				<div class="tab" id="tab_about">
-					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>U.I. testing<br><br>
+					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>v0.1.1.0<br><br>
 					<a href="https://aarextiaokhiao.github.io/">Home</a><br>
 					<a>Changelog</a> (coming soon)<br>
-					<a href="http://disoord.gg/h9mDese">Discord</a> (leads to NG+3 server temporarily)
+					<a href="http://discord.gg/h9mDese">Discord</a> (leads to NG+3 server temporarily)
 				</div>
 			</div>
 		</div>
