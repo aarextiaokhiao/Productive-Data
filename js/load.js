@@ -11,35 +11,36 @@ function load_game(save_file) {
 		game = safe_save
 		produce(game.production)
 		update_theme()
+		document.getElementById("exported_save").style.display = "none"
 	}
 }
 
 function update_save(save_file) {
-	//FUTURE CODE
 	if (compare_version(save_file.version, "0.1.2.0")) {
-		
+		save_file.files = {unlocked: false}
+		for (var id=1; id<9; id++) save_file.files[id] = 0
+		save_file.statistics.total_upgrades = save_file.upgrades[0] + save_file.upgrades[1] + save_file.upgrades[2]
+		save_file.statistics.bits_injected = 0
+		save_file.options.theme = {
+			color: 5,
+			light: save_file.options.theme == "Light",
+			dark: save_file.options.theme == "Dark"
+		}
 	}
-	save_file.version = "0.1.1.0"
+	save_file.version = "0.1.2.0"
 }
 
 function compare_version(ver1, ver2) {
 	var ver1_data = ver1.split(".")
 	var ver2_data = ver2.split(".")
 	
-	var age_number1 = parseInt(ver1_data[1])
-	var age_number2 = parseInt(ver2_data[1])
-	if (age_number1 > age_number2) return false
-	if (age_number1 < age_number2) return true
-	
-	var stage_number1 = parseInt(ver1_data[2])
-	var stage_number2 = parseInt(ver2_data[2])
-	if (stage_number1 > stage_number2) return false
-	if (stage_number1 < stage_number2) return true
-	
-	var minor_number1 = parseInt(ver1_data[3])
-	var minor_number2 = parseInt(ver2_data[3])
-	if (minor_number1 >= minor_number2) return false
-	if (minor_number1 < minor_number2) return true
+	for (var layer=1;layer<4;layer++) {
+		var number1 = parseInt(ver1_data[layer])
+		var number2 = parseInt(ver2_data[layer])
+		if (number1 > number2) return false
+		if (number1 < number2) return true
+	}
+	return false
 }
 
 function export_save() {

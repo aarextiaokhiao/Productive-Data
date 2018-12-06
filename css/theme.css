@@ -1,16 +1,6 @@
-.normal-theme {
+:root {
 	--background: #000000;
-	--color: #00ff00
-}
-
-.light-theme {
-	--background: #ffffff;
-	--color: #00bf00
-}
-
-.dark-theme {
-	--background: #000000;
-	--color: #007f00
+	--color: #00ff00;
 }
 
 body {
@@ -83,12 +73,12 @@ button:hover {
 .currency {
 	position: relative;
 	width: 480px;
-	height: 36px
+	height: 60px
 }
 .amount {
 	position: absolute;
 	left: 4px;
-	top: 4px;
+	top: 4px
 }
 .produce {
 	position: absolute;
@@ -96,6 +86,11 @@ button:hover {
 	top: 4px;
 	width: 150px;
 	height: 32px;
+}
+.production {
+	position: absolute;
+	left: 4px;
+	bottom: 4px
 }
 .tabButtons {
 	overflow-y: auto
@@ -145,18 +140,32 @@ button:hover {
 .upgrade {
 	position: relative;
 	width: 360px;
-	height: 240px;
+	height: 200px;
 	display: inline-block;
 	border: 2px solid var(--color);
 	margin: 2px
 }
 .upgrade_effect {
 	position: absolute;
+	width: 100%;
 	top: 4px
 }
 .upgrade_button {
 	position: absolute;
 	transform: translate(-50%, 0);
 	bottom: 4px;
+	width: 350px
+}
+.tab_locked {
+	position: absolute;
+	left: 50%;
+	bottom: 50%;
+	transform: translate(-50%,50%);
+	text-align: center;
+}
+.unlock_button {
 	width: 240px
+}
+.theme_option_button {
+	width: 180px
 }
