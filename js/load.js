@@ -10,8 +10,9 @@ function load_game(save_file) {
 		stop_interval()
 		game = safe_save
 		produce(game.production)
+		update_tab_buttons()
 		update_theme()
-		document.getElementById("exported_save").style.display = "none"
+		update_tab_on_switch("options")
 	}
 }
 
@@ -27,7 +28,14 @@ function update_save(save_file) {
 			dark: save_file.options.theme == "Dark"
 		}
 	}
-	save_file.version = "0.1.2.0"
+	if (compare_version(save_file.version, "0.1.3.0")) {
+		save_file.computers = {unlocked: false, file_selected: null}
+		for (var id=1; id<5; id++) save_file.computers[id] = {exp: 0, level: 0}
+		save_file.statistics.files_dissolved = 0
+		save_file.statistics.exp_gained = 0
+		save_file.statistics.total_levelups = 0
+	}
+	save_file.version = "0.1.3.0"
 }
 
 function compare_version(ver1, ver2) {
@@ -68,7 +76,11 @@ function import_save() {
 function hard_reset() {
 	if (!confirm("Hard resetting your save erases everything, including your options and statistics. ARE YOU REALLY WANT TO DO THIS? YOU CAN'T UNDO THIS!")) return
 	stop_interval()
+	produce()
 	game = get_default_player()
 	save_game()
+	update_tab_buttons()
+	update_theme()
+	update_tab_on_switch("options")
 	start_interval()
 }

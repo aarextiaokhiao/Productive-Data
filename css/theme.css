@@ -169,3 +169,7 @@ button:hover {
 .theme_option_button {
 	width: 180px
 }
+.select_file_button {
+	height: 60px;
+	width: 180px;
+}

@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>Productive Data v0.1.2.0</title>
+		<title>Productive Data v0.1.3.0</title>
 		<link rel="stylesheet" type="text/css" href="css/theme.css">
 		<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
 		<script type="text/javascript" src="js/core.js"></script>
@@ -26,6 +26,7 @@
 			<div class="boxInside tabButtons">
 				<button onclick="switch_tab('upgrades')">Upgrades</button>
 				<button onclick="switch_tab('files')">Files</button>
+				<button id="tab_button_computers" onclick="switch_tab('computers')">Computers</button>
 				<button onclick="switch_tab('statistics')">Statistics</button>
 				<button onclick="switch_tab('options')">Options</button>
 				<button onclick="switch_tab('about')">About</button>
@@ -85,6 +86,39 @@
 						</div>
 					</div>
 				</div>
+				<div class="tab" id="tab_computers">
+					<div class="tab_locked" id="tab_locked_computers">
+						<b style="font-size: 48px">Unlock computers?</b><br>
+						<button class="unlock_button" onclick="unlock_computers()">512x multiplier</button>
+						<div id="total_file_boost_computers"></div>
+					</div>
+					<div id="tab_unlocked_computers">
+						<b style="font-size: 48px">Select the file you want to dissolve.</b>
+						<div id="file_selected"></div>
+						<button class="select_file_button" id="select_file_1" onclick="select_file(1)"></button>
+						<button class="select_file_button" id="select_file_2" onclick="select_file(2)"></button>
+						<button class="select_file_button" id="select_file_3" onclick="select_file(3)"></button>
+						<button class="select_file_button" id="select_file_4" onclick="select_file(4)"></button>
+						<button class="select_file_button" id="select_file_5" onclick="select_file(5)"></button>
+						<button class="select_file_button" id="select_file_6" onclick="select_file(6)"></button>
+						<button class="select_file_button" id="select_file_7" onclick="select_file(7)"></button>
+						<button class="select_file_button" id="select_file_8" onclick="select_file(8)"></button>
+						<div id="total_computer_boost"></div>
+						<div class="upgrade">
+							<div class="upgrade_effect" id="computer_1"></div>
+							<button class="upgrade_button" id="computer_1_button" onclick="computer_dissolve(1)">Dissolve</button>
+						</div><div class="upgrade">
+							<div class="upgrade_effect" id="computer_2"></div>
+							<button class="upgrade_button" id="computer_2_button" onclick="computer_dissolve(2)">Dissolve</button>
+						</div><div class="upgrade">
+							<div class="upgrade_effect" id="computer_3"></div>
+							<button class="upgrade_button" id="computer_3_button" onclick="computer_dissolve(3)">Dissolve</button>
+						</div><div class="upgrade">
+							<div class="upgrade_effect" id="computer_4"></div>
+							<button class="upgrade_button" id="computer_4_button" onclick="computer_dissolve(4)">Dissolve</button>
+						</div>
+					</div>
+				</div>
 				<div class="tab" id="tab_statistics">
 					<table align=center>
 						<tr>
@@ -106,6 +140,18 @@
 						<tr id="bits_injected_row">
 							<td>Total bits injected:</td>
 							<td id="bits_injected">0</td>
+						</tr>
+						<tr id="files_dissolved_row">
+							<td>Total files dissolved:</td>
+							<td id="files_dissolved">0</td>
+						</tr>
+						<tr id="total_exp_row">
+							<td>Total EXP gained:</td>
+							<td id="total_exp">0</td>
+						</tr>
+						<tr id="total_levelups_row">
+							<td>Total level ups:</td>
+							<td id="total_levelups">0</td>
 						</tr>
 					</table>
 				</div>
@@ -131,7 +177,7 @@
 						<button class="theme_option_button" onclick="change_theme_color(3)">Yellow</button>
 						<button class="theme_option_button" onclick="change_theme_color(4)">Lime</button>
 						<button class="theme_option_button" onclick="change_theme_color(5)">Green</button>
-						<button class="theme_option_button" onclick="change_theme_color(6)">Aqua</button>
+						<button class="theme_option_button" onclick="change_theme_color(6)">Jade</button>
 						<button class="theme_option_button" onclick="change_theme_color(7)">Cyan</button>
 						<button class="theme_option_button" onclick="change_theme_color(8)">Water</button>
 						<button class="theme_option_button" onclick="change_theme_color(9)">Blue</button>
@@ -143,7 +189,7 @@
 					</div>
 				</div>
 				<div class="tab" id="tab_about">
-					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>v0.1.2.0<br><br>
+					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>v0.1.3.0<br><br>
 					<a href="https://aarextiaokhiao.github.io/">Home</a><br>
 					<a>Changelog</a> (coming soon)<br>
 					<a href="http://discord.gg/h9mDese">Discord</a> (leads to NG+3 server temporarily)

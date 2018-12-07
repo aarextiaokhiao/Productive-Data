@@ -5,12 +5,16 @@ function get_default_player() {
 		bytes: 0,
 		upgrades: [0,0,0],
 		files: {unlocked: false},
+		computers: {unlocked: false, file_selected: null},
 		statistics: {
 			playtime: 0,
 			total_bits: 0,
 			total_bytes: 0,
 			total_upgrades: 0,
-			bits_injected: 0
+			bits_injected: 0,
+			files_dissolved: 0,
+			exp_gained: 0,
+			total_levelups: 0
 		},
 		options: {
 			tick_rate: 30,
@@ -21,10 +25,11 @@ function get_default_player() {
 				dark: false
 			}
 		},
-		version: "0.1.2.0",
+		version: "0.1.3.0",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = 0
+	for (var id=1; id<5; id++) default_player.computers[id] = {exp: 0, level: 0}
 	return default_player
 }
 
@@ -34,7 +39,7 @@ function game_tick() {
 	diff /= 1e3
 
 	game.statistics.playtime += diff
-	
+
 	if (game.production == "bits") {
 		var add = Math.min(get_bit_production() * diff, get_bit_capacity() - game.bits)
 		game.bits += add
@@ -103,7 +108,7 @@ function format(num, places) {
 	if (game.options.notation == "Scientific") return mantissa.toFixed(3) + "e" + exponent
 	var places = exponent % 3
 	if (game.options.notation == "Engineering") return (mantissa * Math.pow(10, places)).toFixed(3 - places) + "e" + (exponent - places)
-	else if (game.options.notation == "Standard") return (mantissa * Math.pow(10, places)).toFixed(3 - places) + (["k", "M", "B", "T", "Qa"])[Math.floor(exponent / 3) - 1]
+	else if (game.options.notation == "Standard") return (mantissa * Math.pow(10, places)).toFixed(3 - places) + (["k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"])[Math.floor(exponent / 3) - 1]
 }
 
 const timeframes={year:31556952,
@@ -178,7 +183,7 @@ function change_tick_rate() {
 
 function get_theme_name() {
 	var msg = ""
-	if (game.options.theme.color != 5) msg = ([null, "Red", "Orange", "Yellow", "Lime", null, "Aqua", "Cyan", "Water", "Blue", "Purple", "Pink", "Red Beryl"])[game.options.theme.color]
+	if (game.options.theme.color != 5) msg = ([null, "Red", "Orange", "Yellow", "Lime", null, "Jade", "Cyan", "Water", "Blue", "Purple", "Pink", "Red Beryl"])[game.options.theme.color]
 	if (game.options.theme.dark) {
 		if (msg == "") msg = "Dark"
 		else msg += " Dark"
@@ -198,34 +203,24 @@ function update_theme() {
 	if (game.options.theme.light) root.style.setProperty('--background', "rgb(255, 255, 255)")
 	else root.style.setProperty('--background', "rgb(0, 0, 0)")
 
-	var value1 = 255
-	var value2 = 0
-	if (game.options.theme.color % 4 == 3 || game.options.theme.color % 4 == 0) value2 = 255
-	else if (game.options.theme.color % 4 == 2) value2 = 127
-	if (game.options.theme.color % 4 == 0) value1 = 127
+	var mult = 256
+	if (game.options.theme.light) mult /= 2
+	if (game.options.theme.dark) mult *= 0.75
+	var value1 = Math.min(2 - ((game.options.theme.color - 1) % 4) / 2, 1) * mult - 1
+	var value2 = Math.min(((game.options.theme.color - 1) % 4) / 2, 1) * mult - 1
 	
 	var rgb
 	if (game.options.theme.color > 8) rgb = [value2, 0, value1]
 	else if (game.options.theme.color > 4) rgb = [0, value1, value2]
 	else rgb = [value1, value2, 0]
-	
-	if (game.options.theme.light) {
-		rgb[0] = (rgb[0] + 1) / 2 - 1
-		rgb[1] = (rgb[1] + 1) / 2 - 1
-		rgb[2] = (rgb[2] + 1) / 2 - 1
-	}
-	if (game.options.theme.dark) {
-		rgb[0] = (rgb[0] + 1) * 0.75 - 1
-		rgb[1] = (rgb[1] + 1) * 0.75 - 1
-		rgb[2] = (rgb[2] + 1) * 0.75 - 1
-	}
+
 	root.style.setProperty('--color', "rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")")
 }
 
 function change_theme_color(id) {
 	game.options.theme.color = id
 	document.getElementById("theme").textContent = "Theme: " + get_theme_name()
-	document.getElementById("theme_color").textContent = "Color: " + ([null, "Red", "Orange", "Yellow", "Lime", "Green", "Aqua", "Cyan", "Water", "Blue", "Purple", "Pink", "Red Beryl"])[game.options.theme.color]
+	document.getElementById("theme_color").textContent = "Color: " + ([null, "Red", "Orange", "Yellow", "Lime", "Green", "Jade", "Cyan", "Water", "Blue", "Purple", "Pink", "Red Beryl"])[game.options.theme.color]
 	update_theme()
 }
 
@@ -294,9 +289,9 @@ function update_upgrade(id) {
 }
 
 function get_upgrade_cost(id) {
-	if (id == 1) return Math.pow(2, game.upgrades[id - 1] + 1)
-	if (id == 2) return Math.pow(1.5, game.upgrades[id - 1]) * 2
-	if (id == 3) return Math.pow(2, game.upgrades[2] + 3)
+	if (id == 1) return Math.pow(2, game.upgrades[0] + 1) / get_total_computer_boost()
+	if (id == 2) return Math.pow(1.5, game.upgrades[1]) * 2
+	if (id == 3) return Math.pow(2, game.upgrades[2] + 3) / get_total_computer_boost()
 }
 
 function buy_upgrade(id) {
@@ -313,10 +308,11 @@ function unlock_files() {
 	game.bytes -= 64
 	game.files.unlocked = true
 	update_tab_on_switch("files")
+	document.getElementById("tab_button_computers").style.display = ""
 }
 
 function update_file(id) {
-	document.getElementById("file_" + id).innerHTML = "File #" + id + "<br>Multiplier: " + format(Math.log10(game.files[id] + 1) / 4 + 1, 1) + "x<br>" + format(game.files[id]) + " bits"
+	document.getElementById("file_" + id).innerHTML = "File #" + id + "<br>Multiplier: " + format(Math.log10(game.files[id] / 256 + 1) / 4 + 1, 1) + "x<br>" + format(game.files[id]) + " bits"
 }
 
 function inject_data(id) {
@@ -331,6 +327,48 @@ function inject_data(id) {
 
 function get_total_file_boost() {
 	var product = 1
-	if (game.files.unlocked) for (var file=1; file<9; file++) product *= Math.log10(game.files[file] + 1) / 4 + 1
+	if (game.files.unlocked) for (var file=1; file<9; file++) product *= Math.log10(game.files[file] / 256 + 1) / 4 + 1
+	return product
+}
+
+//Stage 1-3: Computers
+function unlock_computers() {
+	if (get_total_file_boost() < 512) return
+	game.computers.unlocked = true
+	update_tab_on_switch("computers")
+}
+
+function select_file(id) {
+	if (game.files[id] == 0) return
+	game.computers.file_selected = id
+	document.getElementById("file_selected").textContent = "File selected: #" + id
+}
+
+function update_computer(id) {
+	document.getElementById("computer_" + id).innerHTML = "Computer #" + id + "<br>Multiplier: " + format(Math.pow(2, Math.sqrt(game.computers[id].level / 4)), 1) + "x<br>Level: " + game.computers[id].level + "<br>EXP: " + format(game.computers[id].exp) + "<br>Next: " + format(get_level_requirement(id))
+}
+
+function get_level_requirement(comp) {
+	return Math.pow(2, game.computers[comp].level + 24)
+}
+
+function computer_dissolve(comp) {
+	if (game.computers.file_selected == null) return
+	game.computers[comp].exp += game.files[game.computers.file_selected]
+	game.files[game.computers.file_selected] = 0
+	document.getElementById("select_file_" + game.computers.file_selected).innerHTML = "File #" + game.computers.file_selected + "<br>0 bits"
+	game.computers.file_selected = null
+	document.getElementById("file_selected").textContent = "File selected: None"
+	if (game.computers[comp].exp >= get_level_requirement(comp)) {
+		game.computers[comp].level += Math.floor(Math.log10(game.computers[comp].exp / get_level_requirement(comp)) / Math.log10(2) + 1)
+		game.computers[comp].exp = 0
+		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
+	}
+	update_computer(comp)
+}
+
+function get_total_computer_boost() {
+	var product = 1
+	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) product *= Math.pow(2, Math.sqrt(game.computers[comp].level / 4))
 	return product
 }
