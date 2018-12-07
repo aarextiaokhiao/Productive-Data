@@ -13,7 +13,7 @@ function get_default_player() {
 			total_upgrades: 0,
 			bits_injected: 0,
 			files_dissolved: 0,
-			exp_gained: 0,
+			total_exp: 0,
 			total_levelups: 0
 		},
 		options: {
@@ -25,7 +25,7 @@ function get_default_player() {
 				dark: false
 			}
 		},
-		version: "0.1.3.0",
+		version: "0.1.3.1",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = 0
@@ -355,12 +355,16 @@ function get_level_requirement(comp) {
 function computer_dissolve(comp) {
 	if (game.computers.file_selected == null) return
 	game.computers[comp].exp += game.files[game.computers.file_selected]
+	game.statistics.total_exp += game.files[game.computers.file_selected]
 	game.files[game.computers.file_selected] = 0
+	game.statistics.files_dissolved++
 	document.getElementById("select_file_" + game.computers.file_selected).innerHTML = "File #" + game.computers.file_selected + "<br>0 bits"
 	game.computers.file_selected = null
 	document.getElementById("file_selected").textContent = "File selected: None"
 	if (game.computers[comp].exp >= get_level_requirement(comp)) {
-		game.computers[comp].level += Math.floor(Math.log10(game.computers[comp].exp / get_level_requirement(comp)) / Math.log10(2) + 1)
+		var add = Math.floor(Math.log10(game.computers[comp].exp / get_level_requirement(comp)) / Math.log10(2) + 1)
+		game.computers[comp].level += add
+		game.statistics.total_levelups += add
 		game.computers[comp].exp = 0
 		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
 	}

@@ -35,7 +35,12 @@ function update_save(save_file) {
 		save_file.statistics.exp_gained = 0
 		save_file.statistics.total_levelups = 0
 	}
-	save_file.version = "0.1.3.0"
+	if (compare_version(save_file.version, "0.1.3.1")) {
+		save_file.statistics.total_exp = save_file.statistics.exp_gained
+		for (var comp=1; comp<5; comp++) save_file.statistics.total_levelups += save_file.computers[comp].level
+		delete save_file.statistics.exp_gained
+	}
+	save_file.version = "0.1.3.1"
 }
 
 function compare_version(ver1, ver2) {
