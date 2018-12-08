@@ -45,7 +45,7 @@ function get_default_player() {
 			},
 			locked_bits_production: false
 		},
-		version: "0.1.4.0",
+		version: "0.1.4.1",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = {bits: 0, words: 0}
@@ -66,6 +66,10 @@ function game_tick() {
 			var add = Math.min(get_bit_production() * diff, get_bit_capacity() - game.bits)
 			game.bits += add
 			game.statistics.total_bits += add
+			if (game.files.unlocked) for (var file=1; file<9; file++) if (is_autobuyer_on(file + 5)) if (game.files[file].bits + Math.ceil(Math.floor(game.bits) * game.files.percentage / 100) >= Math.floor(Math.max(game.files[file].bits, 1) * 1.5)) {
+				inject_data(file)
+				failed = false
+			}
 		} else if (game.production == "bytes") {
 			var add = Math.min(get_byte_production() * diff, game.bits / 8)
 			game.bits -= add * 8
@@ -73,24 +77,14 @@ function game_tick() {
 			game.statistics.total_bytes += add
 		}
 		if (!can_produce(game.production)) {
-			var failed = true
-			if (game.files.unlocked) for (var file=1; file<9; file++) { 
-				if (game.files[file].bits + Math.ceil(Math.floor(game.bits) * game.files.percentage / 100) >= Math.floor(game.files[file].bits * 1.5) && is_autobuyer_on(file + 5)) {
-					inject_data(file)
-					failed = false
-					break
-				}
-			}
-			if (failed) {
-				if (is_autobuyer_on(2) && game.production == "bits") produce("bytes")
-				else if (is_autobuyer_on(1) && game.production == "bytes") produce("bits")
-				else produce(game.production)
-			}
+			if (is_autobuyer_on(2) && game.production == "bits") produce("bytes")
+			else if (is_autobuyer_on(1) && game.production == "bytes") produce("bits")
+			else produce(game.production)
 		}
 	}
-	if (is_autobuyer_on(5) && game.bytes >= get_upgrade_cost(3)) buy_upgrade(3)
-	if (is_autobuyer_on(3) && game.bytes >= get_upgrade_cost(1)) buy_upgrade(1)
-	if (is_autobuyer_on(4) && game.bytes >= get_upgrade_cost(2)) buy_upgrade(2)
+	if (is_autobuyer_on(5)) if (game.bytes >= get_upgrade_cost(3)) buy_upgrade(3)
+	if (is_autobuyer_on(3)) if (game.bytes >= get_upgrade_cost(1)) buy_upgrade(1)
+	if (is_autobuyer_on(4)) if (game.bytes >= get_upgrade_cost(2)) buy_upgrade(2)
 
 	var total = 0
 	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) total += game.computers[comp].level
@@ -207,7 +201,7 @@ function get_aas_abbreviation(x) {
 	if (x < 0 || x > 101) return "?"
 	const units = ["", "U", "D", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "N"]
 	const tens = ["", "D", "Vg", "Tg", "Qg", "Qq", "Sg", "Su", "Og", "Ng"]
-	return tens[Math.floor(x / 10)] + units[x % 10]
+	return units[x % 10] + tens[Math.floor(x / 10)] 
 }
 
 function get_letters_abbreviation(x) {
@@ -475,7 +469,7 @@ function inject_data(id) {
 	game.bits -= add
 	game.files[id].bits += add
 	game.statistics.bits_injected += add
-	if (game.computers.unlocked) if (is_autobuyer_on(id + 13) && game.computers[id].exp + game.ids[id].bits > get_level_requirement(id)) {
+	if (game.computers.unlocked) if (is_autobuyer_on(id + 13)) if (game.computers[id].exp + game.files[id].bits > get_level_requirement(id)) {
 		game.computers.file_selected = id
 		computer_dissolve(id)
 	}
@@ -624,7 +618,7 @@ function get_autobuyer_cost() {
 }
 
 function update_autobuyers() {
-	if (game.transfer.autobuyers_unlocked == 16) document.getElementById("buy_autobuyer").style.display = "none"
+	if (game.transfer.autobuyers_unlocked == 17) document.getElementById("buy_autobuyer").style.display = "none"
 	else {
 		document.getElementById("buy_autobuyer").style.display = ""
 		document.getElementById("buy_autobuyer").innerHTML = "Buy " + autobuyer_names[game.transfer.autobuyers_unlocked + 1] + " Autobuyer<br>Cost: " + get_autobuyer_cost() + " words"

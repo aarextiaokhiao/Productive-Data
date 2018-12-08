@@ -60,7 +60,7 @@ function update_save(save_file) {
 		save_file.options.offline_progress = true
 		save_file.options.locked_bits_production = false
 	}
-	save_file.version = "0.1.4.0"
+	save_file.version = "0.1.4.1"
 }
 
 function compare_version(ver1, ver2) {
