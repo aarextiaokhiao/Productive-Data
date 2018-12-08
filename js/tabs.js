@@ -14,7 +14,11 @@ function update_tab_on_switch(id) {
 		if (game.files.unlocked) {
 			document.getElementById("tab_locked_files").style.display = "none"
 			document.getElementById("tab_unlocked_files").style.display = "block"
-			for (var file=1; file<9; file++) update_file(file)
+			document.getElementById("percentage_to_be_injected").innerHTML = "<b>Percentage of data to be injected</b>: " + (Math.round(game.files.percentage * 10) / 10) + "%"
+			for (var file=1; file<9; file++) {
+				update_file(file)
+				document.getElementById("inject_words_" + file).style.display = game.statistics.times_transfer > 0 ? "" : "none"
+			}
 			document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 		} else {
 			document.getElementById("tab_locked_files").style.display = "block"
@@ -25,8 +29,8 @@ function update_tab_on_switch(id) {
 		if (game.computers.unlocked) {
 			document.getElementById("tab_locked_computers").style.display = "none"
 			document.getElementById("tab_unlocked_computers").style.display = "block"
-			document.getElementById("file_selected").textContent = "File selected: " + (game.computers.file_selected ? "#" + game.computers.file_selected : "None")
-			for (var file=1; file<9; file++) document.getElementById("select_file_" + file).innerHTML = "File #" + file + "<br>" + format(game.files[file]) + " bits"
+			document.getElementById("file_selected").innerHTML = "<b>File selected</b>: " + (game.computers.file_selected ? "#" + game.computers.file_selected : "None")
+			for (var file=1; file<9; file++) document.getElementById("select_file_" + file).innerHTML = "File #" + file + "<br>" + format(game.files[file].bits) + " bits"
 			for (var comp=1; comp<5; comp++) update_computer(comp)
 			document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
 		} else {
@@ -34,6 +38,12 @@ function update_tab_on_switch(id) {
 			document.getElementById("tab_unlocked_computers").style.display = "none"
 			document.getElementById("total_file_boost_computers").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 		}
+	}
+	if (id == "transfer") {
+		var total = 0
+		if (game.computers.unlocked) for (var comp=1; comp<5; comp++) total += game.computers[comp].level
+		document.getElementById("total_computer_levels").innerHTML = "<b>Total computer levels</b>: " + total
+		if (game.statistics.times_transfer > 0) update_autobuyers()
 	}
 	if (id == "statistics") {
 		document.getElementById("total_upgrades").textContent = game.statistics.total_upgrades
@@ -46,25 +56,46 @@ function update_tab_on_switch(id) {
 			document.getElementById("total_exp_row").style.display = ""
 			document.getElementById("total_levelups_row").style.display = ""
 			document.getElementById("files_dissolved").textContent = game.statistics.files_dissolved
-			document.getElementById("total_exp").textContent = game.statistics.total_exp
+			document.getElementById("total_exp").textContent = format(game.statistics.total_exp)
 			document.getElementById("total_levelups").textContent = game.statistics.total_levelups
 		} else {
 			document.getElementById("files_dissolved_row").style.display = "none"
 			document.getElementById("total_exp_row").style.display = "none"
 			document.getElementById("total_levelups_row").style.display = "none"
 		}
+		if (game.statistics.times_transfer > 0) {
+			document.getElementById("times_transfer_row").style.display = ""
+			document.getElementById("time_this_transfer_row").style.display = ""
+			document.getElementById("fastest_transfer_row").style.display = ""
+			document.getElementById("total_words_row").style.display = ""
+			document.getElementById("words_injected_row").style.display = ""
+			document.getElementById("times_transfer").textContent = game.statistics.times_transfer
+			document.getElementById("fastest_transfer").textContent = format_time(game.statistics.fastest_transfer)
+			document.getElementById("total_words").textContent = format(game.statistics.total_words)
+			document.getElementById("words_injected").textContent = format(game.statistics.words_injected)
+		} else {
+			document.getElementById("times_transfer_row").style.display = "none"
+			document.getElementById("time_this_transfer_row").style.display = "none"
+			document.getElementById("fastest_transfer_row").style.display = "none"
+			document.getElementById("total_words_row").style.display = "none"
+			document.getElementById("words_injected_row").style.display = "none"
+		}
 	}
 	if (id == "options") {
+		document.getElementById("auto_save").textContent = "Auto save: " + (game.options.auto_save ? "ON" : "OFF")
+		document.getElementById("offline_progress").textContent = "Offline progress: " + (game.options.offline_progress ? "ON" : "OFF")
 		document.getElementById("tick_rate").textContent = "Tick rate: " + game.options.tick_rate + "/s"
 		document.getElementById("theme").textContent = "Theme: " + get_theme_name()
 		document.getElementById("theme_menu").style.display = "none"
 		document.getElementById("notation").textContent = "Notation: " + game.options.notation
+		document.getElementById("lock_bits_production").textContent = "Locked bits production: " + (game.options.locked_bits_production ? "ON" : "OFF")
 		document.getElementById("exported_save").style.display = "none"
 	}
 }
 
 function update_tab_buttons() {
-	document.getElementById("tab_button_computers").style.display = game.files.unlocked ? "" : "none"
+	document.getElementById("tab_button_computers").style.display = game.files.unlocked || game.statistics.times_transfer > 0 ? "" : "none"
+	document.getElementById("tab_button_transfer").style.display = game.computers.unlocked || game.statistics.times_transfer > 0 ? "" : "none"
 }
 
 function open_theme_menu() {

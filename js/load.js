@@ -12,7 +12,9 @@ function load_game(save_file) {
 		produce(game.production)
 		update_tab_buttons()
 		update_theme()
-		update_tab_on_switch("options")
+		if (tab_name == "options") update_tab_on_switch("options")
+		update_words()
+		if (!game.options.offline_progress) game.lastTick = new Date().getTime()
 	}
 }
 
@@ -40,7 +42,25 @@ function update_save(save_file) {
 		for (var comp=1; comp<5; comp++) save_file.statistics.total_levelups += save_file.computers[comp].level
 		delete save_file.statistics.exp_gained
 	}
-	save_file.version = "0.1.3.1"
+	if (compare_version(save_file.version, "0.1.4.0")) {
+		save_file.files.percentage = 100
+		for (var file=1; file<9; file++) save_file.files[file] = {bits: save_file.files[file], words: 0}
+		save_file.transfer = {
+			words: 0,
+			words_gain_rate_peak: 0,
+			automation: {},
+			autobuyers_unlocked: 0
+		}
+		save_file.statistics.times_transfer = 0
+		save_file.statistics.time_this_transfer = save_file.statistics.playtime
+		save_file.statistics.fastest_transfer = 1/0
+		save_file.statistics.total_words = 0
+		save_file.statistics.words_injected = 0
+		save_file.options.auto_save = true
+		save_file.options.offline_progress = true
+		save_file.options.locked_bits_production = false
+	}
+	save_file.version = "0.1.4.0"
 }
 
 function compare_version(ver1, ver2) {
@@ -87,5 +107,6 @@ function hard_reset() {
 	update_tab_buttons()
 	update_theme()
 	update_tab_on_switch("options")
+	update_words()
 	start_interval()
 }
