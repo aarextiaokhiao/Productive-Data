@@ -52,7 +52,7 @@ function get_default_player() {
 			},
 			locked_bits_production: false
 		},
-		version: "0.1.5.1",
+		version: "0.1.5.2",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = {bits: 0, words: 0}
@@ -139,34 +139,43 @@ function stop_interval() {
 }
 
 function init_game() {
-	var filesDiv = document.getElementById("tab_unlocked_files")
+	var files_div = document.getElementById("tab_unlocked_files")
 	for (var file=1; file<9; file++) {
-		var fileDiv = document.createElement("div")
-		fileDiv.className = "upgrade"
-		fileDiv.innerHTML = "<div class='upgrade_effect' id='file_" + file + "'></div>" +
+		var file_div = document.createElement("div")
+		file_div.className = "upgrade"
+		file_div.innerHTML = "<div class='upgrade_effect' id='file_" + file + "'></div>" +
 			"<button class='upgrade_button' id='file_" + file + "_button' onclick='inject_data(" + file + ")'>Inject</button>" +
-			"<button class='inject_button_secondary' id='inject_words_" + file + "' onclick='inject_words(" + file + ")'>Inject with words</button>"
-		filesDiv.append(fileDiv)
+			"<button class='inject_button_secondary' id='inject_words_" + file + "' onclick='inject_words(" + file + ")'>Inject words</button>"
+		files_div.append(file_div)
 	}
 	
-	var computersDiv = document.getElementById("computers")
+	var computers_div = document.getElementById("computers")
 	for (var comp=1; comp<5; comp++) {
-		var computerDiv = document.createElement("div")
-		computerDiv.className = "computer"
-		computerDiv.innerHTML = "<div class='upgrade_effect' id='computer_" + comp + "'></div>" +
+		var computer_div = document.createElement("div")
+		computer_div.className = "computer"
+		computer_div.innerHTML = "<div class='upgrade_effect' id='computer_" + comp + "'></div>" +
 			"<button class='upgrade_button' id='computer_" + comp + "_button' onclick='primary_computer_dissolve(" + comp + ")'>Dissolve</button>" +
 			"<button class='inject_button_secondary' id='computer_" + comp + "_button_secondary' onclick='dissolve_for_sxp(" + comp + ")'>Dissolve for SXP</button>"
-		computersDiv.append(computerDiv)
+		computers_div.append(computer_div)
 	}
 	
-	var automationDiv = document.getElementById("automation")
+	var automation_div = document.getElementById("automation")
 	for (var autobuyer=1; autobuyer<18; autobuyer++) {
-		var autobuyerDiv = document.createElement("div")
-		autobuyerDiv.className = "upgrade"
-		autobuyerDiv.id = "autobuyer_" + autobuyer
-		autobuyerDiv.innerHTML = "<div class='upgrade_effect'>" + autobuyer_names[autobuyer] + " Autobuyer</div>" +
+		var autobuyer_div = document.createElement("div")
+		autobuyer_div.className = "upgrade"
+		autobuyer_div.id = "autobuyer_" + autobuyer
+		autobuyer_div.innerHTML = "<div class='upgrade_effect'>" + autobuyer_names[autobuyer] + " Autobuyer</div>" +
 			"<button class='upgrade_button' id='autobuyer_" + autobuyer + "_toggle' onclick='toggle_autobuyer(" + autobuyer + ")'></button>"
-		automationDiv.append(autobuyerDiv)
+		automation_div.append(autobuyer_div)
+	}
+	
+	var feats_div = document.getElementById("feats")
+	for (var feat=1; feat<feat_descs.length; feat++) {
+		var feat_div = feats_div.insertRow(feat - 1)
+		var feat_desc = feat_div.insertCell(0)
+		var feat_completion = feat_div.insertCell(1)
+		feat_desc.textContent = "#" + feat + ": " + feat_descs[feat]
+		feat_completion.id = "feat_" + feat
 	}
 	
 	game = get_default_player()
@@ -476,7 +485,7 @@ function update_file(id) {
 function inject_data(id) {
 	if (game.bits < 1) return
 	var add = Math.ceil(Math.floor(game.bits) * game.files.percentage / 100)
-	game.bits -= add
+	game.bits = Math.max(game.bits - add, 0)
 	game.files[id].bits += add
 	game.statistics.bits_injected += add
 	if (game.computers.unlocked) if (is_autobuyer_on(id + 13)) if (game.computers[id].exp + game.files[id].bits > get_level_requirement(id) && !game.computers[id].is_server) computer_dissolve(id, true)
@@ -543,6 +552,7 @@ function update_computer(id) {
 		if (game.computers[id].level == 0 && game.computers.servers_unlocked) msg += " EXP<br>To server: 512 SXP"
 	}
 	document.getElementById("computer_" + id).innerHTML = msg
+	document.getElementById("computer_" + id + "_button").textContent = "Dissolve" + (game.computers[id].level > 0 || !game.computers.servers_unlocked ? "" : " for EXP")
 	document.getElementById("computer_" + id + "_button_secondary").style.display = game.computers[id].level > 0 || !game.computers.servers_unlocked ? "none" : ""
 }
 
@@ -665,7 +675,7 @@ function get_words_boost() {
 function inject_words(id) {
 	if (game.transfer.words < 1) return
 	var add = Math.ceil(game.transfer.words * game.files.percentage / 100)
-	game.transfer.words -= add
+	game.transfer.words = Math.max(game.transfer.words - add, 0)
 	game.files[id].words += add
 	game.statistics.words_injected += add
 	update_words()
@@ -674,10 +684,12 @@ function inject_words(id) {
 }
 
 function inject_equally() {
+	if (game.transfer.words < 1) return
+	if (game.transfer.words < 8) if (!confirm("I recommend you to get more words. But, are you sure you want to do so?")) return
 	for (var file=1; file<9; file++) {
 		var add = Math.ceil(Math.floor(game.transfer.words) / (9 - file))
 		if (add == 0) break
-		game.transfer.words -= add
+		game.transfer.words -= Math.max(game.transfer.words - add, 0)
 		game.files[file].words += add
 		game.statistics.words_injected += add
 		update_file(file)
@@ -789,12 +801,18 @@ function dissolve_for_sxp(comp) {
 	update_words()
 }
 
+var feat_descs = [null, "Transfer in under 10 seconds."]
+var feat_disappear_timeout
 function get_feat(id) {
 	if (!game.computers.servers_unlocked) return
 	if (game.feats.achieved.includes(id)) return
 	game.feats.achieved.push(id)
 	game.feats.notifications++
 	document.getElementById("feat_achieved").style.opacity = 1
-	setTimeout(function(){document.getElementById("feat_achieved").style.opacity = 0;}, 5000)
+	document.getElementById("feat_achieved").innerHTML = "<b>Feat #" + id + "achieved!</b><br>" + feat_descs[id]
+	clearInterval(feat_disappear_timeout)
+	feat_disappear_timeout = setTimeout(function() {
+		document.getElementById("feat_achieved").style.opacity = 0
+	}, 5000)
 	document.getElementById("tab_button_feats").textContent = "Feats (" + game.feats.notifications + ")"
 }

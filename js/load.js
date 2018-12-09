@@ -74,7 +74,10 @@ function update_save(save_file) {
 			notifications: 0
 		}
 	}
-	save_file.version = "0.1.5.1"
+	if (compare_version(save_file.version, "0.1.5.2")) {
+		save_file.bits = Math.max(save_file.bits, 0)
+	}
+	save_file.version = "0.1.5.2"
 }
 
 function compare_version(ver1, ver2) {

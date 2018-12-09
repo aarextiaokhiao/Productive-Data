@@ -17,6 +17,7 @@ function update_tab_on_switch(id) {
 			document.getElementById("percentage_to_be_injected").innerHTML = "<b>Percentage of data to be injected</b>: " + (Math.round(game.files.percentage * 10) / 10) + "%"
 			for (var file=1; file<9; file++) {
 				update_file(file)
+				document.getElementById("file_" + file + "_button").textContent = "Inject" + (game.statistics.times_transfer > 0 ? " bits" : "")
 				document.getElementById("inject_words_" + file).style.display = game.statistics.times_transfer > 0 ? "" : "none"
 			}
 			document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
@@ -97,7 +98,7 @@ function update_tab_on_switch(id) {
 	if (id == "feats") {
 		game.feats.notifications = 0
 		document.getElementById("tab_button_feats").textContent = "Feats"
-		document.getElementById("feat_1").textContent = game.feats.achieved.includes(1) ? "Completed" : "Not completed"
+		for (var feat=1; feat<feat_descs.length; feat++) document.getElementById("feat_" + feat).textContent = game.feats.achieved.includes(feat) ? "Completed" : "Not completed"
 	}
 	if (id == "options") {
 		document.getElementById("auto_save").textContent = "Auto save: " + (game.options.auto_save ? "ON" : "OFF")
