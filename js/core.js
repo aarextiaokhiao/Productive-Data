@@ -10,7 +10,8 @@ function get_default_player() {
 		},
 		computers: {
 			unlocked: false, 
-			file_selected: null
+			file_selected: null,
+			servers_unlocked: false
 		},
 		transfer: {
 			words: 0,
@@ -31,7 +32,13 @@ function get_default_player() {
 			time_this_transfer: 0,
 			fastest_transfer: 1/0,
 			total_words: 0,
-			words_injected: 0
+			words_injected: 0,
+			total_sxp: 0,
+			servers_made: 0
+		},
+		feats: {
+			achieved: [],
+			notifications: 0
 		},
 		options: {
 			auto_save: true,
@@ -45,12 +52,16 @@ function get_default_player() {
 			},
 			locked_bits_production: false
 		},
-		version: "0.1.4.1",
+		version: "0.1.5.0",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = {bits: 0, words: 0}
-	for (var id=1; id<5; id++) default_player.computers[id] = {exp: 0, level: 0}
+	for (var id=1; id<5; id++) default_player.computers[id] = {exp: 0, level: 0, sxp: 0, is_server: false}
 	return default_player
+}
+var data = {
+	normal_computers: 4,
+	computer_strength: 0.125
 }
 
 function game_tick() {
@@ -61,15 +72,14 @@ function game_tick() {
 	game.statistics.playtime += diff
 	game.statistics.time_this_transfer += diff
 
+	game.transfer.words = Math.max(get_words_gain(), 1e3)
+	for (var file=1; file<9; file++) game.files[file].words = game.transfer.words
 	if (game.production && can_produce(game.production)) {
 		if (game.production == "bits") {
 			var add = Math.min(get_bit_production() * diff, get_bit_capacity() - game.bits)
 			game.bits += add
 			game.statistics.total_bits += add
-			if (game.files.unlocked) for (var file=1; file<9; file++) if (is_autobuyer_on(file + 5)) if (game.files[file].bits + Math.ceil(Math.floor(game.bits) * game.files.percentage / 100) >= Math.floor(Math.max(game.files[file].bits, 1) * 1.5)) {
-				inject_data(file)
-				failed = false
-			}
+			if (game.files.unlocked) for (var file=1; file<9; file++) if (is_autobuyer_on(file + 5)) if (game.files[file].bits + Math.ceil(Math.floor(game.bits) * game.files.percentage / 100) >= Math.floor(Math.max(game.files[file].bits, 1) * 1.5)) inject_data(file)
 		} else if (game.production == "bytes") {
 			var add = Math.min(get_byte_production() * diff, game.bits / 8)
 			game.bits -= add * 8
@@ -87,10 +97,14 @@ function game_tick() {
 	if (is_autobuyer_on(4)) if (game.bytes >= get_upgrade_cost(2)) buy_upgrade(2)
 
 	var total = 0
-	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) total += game.computers[comp].level
-	if (total >= 160) {
+	var transfer_requirement = 160
+	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) {
+		if (game.computers[comp].is_server) transfer_requirement -= 40
+		else total += game.computers[comp].level
+	}
+	if (total >= transfer_requirement) {
 		var words_gain = get_words_gain()
-		var words_gain_rate = words_gain / game.statistics.time_this_transfer
+		var words_gain_rate = words_gain / game.statistics.time_this_transfer * 60
 		game.transfer.words_gain_rate_peak = Math.max(words_gain_rate, game.transfer.words_gain_rate_peak)
 	}
 	
@@ -100,7 +114,7 @@ function game_tick() {
 	document.getElementById("bytes_production").innerHTML = format(get_byte_production(), 1) + "/s"
 	
 	if (tab_name == "transfer") {
-		if (total < 160) document.getElementById("transfer").textContent = "You need " + (160 - total) + " more levels to transfer."
+		if (total < transfer_requirement) document.getElementById("transfer").textContent = "You need " + (transfer_requirement - total) + " more levels to transfer."
 		else if (game.statistics.times_transfer == 0) document.getElementById("transfer").textContent = "Reset the game and transfer for words!"
 		else document.getElementById("transfer").innerHTML = "Transfer for " + format(words_gain) + " words.<br>" + format(words_gain_rate / 60, 1) + "/min<br>Peak: " + format(game.transfer.words_gain_rate_peak / 60, 1) + "/min"
 	}
@@ -137,12 +151,13 @@ function init_game() {
 		filesDiv.append(fileDiv)
 	}
 	
-	var computersDiv = document.getElementById("tab_unlocked_computers")
+	var computersDiv = document.getElementById("computers")
 	for (var comp=1; comp<5; comp++) {
 		var computerDiv = document.createElement("div")
-		computerDiv.className = "upgrade"
+		computerDiv.className = "computer"
 		computerDiv.innerHTML = "<div class='upgrade_effect' id='computer_" + comp + "'></div>" +
-			"<button class='upgrade_button' id='computer_" + comp + "_button' onclick='computer_dissolve(" + comp + ")'>Dissolve</button>"
+			"<button class='upgrade_button' id='computer_" + comp + "_button' onclick='primary_computer_dissolve(" + comp + ")'>Dissolve</button>" +
+			"<button class='inject_button_secondary' id='computer_" + comp + "_button_secondary' onclick='dissolve_for_sxp(" + comp + ")'>Dissolve for SXP</button>"
 		computersDiv.append(computerDiv)
 	}
 	
@@ -363,8 +378,8 @@ function change_notation() {
 
 //Age 1: The Hub
 //Stage 1-1: Data
-function produce(id, clicked) {
-	if (id == game.production && (!game.options.locked_bits_production || game.production != "bits" || can_produce("bits"))) id = null
+function produce(id, loaded) {
+	if (id == game.production && (!game.options.locked_bits_production || game.production != "bits" || can_produce("bits")) && !loaded) id = null
 	if (game.production) document.getElementById("produce_"+game.production).textContent = "Produce"
 	game.production = id
 	if (id && can_produce(id)) document.getElementById("produce_"+id).textContent = "Producing"
@@ -381,7 +396,7 @@ function get_bit_production() {
 }
 
 function get_bit_capacity() {
-	return Math.floor(32 * Math.pow(1.5, game.upgrades[1]))
+	return Math.floor(32 * Math.pow(1.5, game.upgrades[1]) * get_words_boost())
 }
 
 function lock_bits_production() {
@@ -399,10 +414,7 @@ function update_upgrade(id) {
 	if (id == 1) message = "Increase the bit production by 50%."
 	if (id == 2) message = "Increase the bit capacity by 50%."
 	if (id == 3) message = "Increase the byte production by 50%."
-	message += "<br><br>Level: " + game.upgrades[id - 1] + "<br>Currently: "
-	if (id == 1) message += format(Math.pow(1.5, game.upgrades[0]), 1) + "x"
-	if (id == 2) message += format(get_bit_capacity())
-	if (id == 3) message += format(Math.pow(1.5, game.upgrades[2]), 1) + "x"
+	message += "<br><br>Level: " + game.upgrades[id - 1] + "<br>Currently: " + format(Math.pow(1.5, game.upgrades[id - 1]), 1) + "x"
 	document.getElementById("upgrade_" + id).innerHTML = message
 	document.getElementById("upgrade_" + id + "_button").textContent = "Cost: " + format(get_upgrade_cost(id)) + " bytes"
 }
@@ -469,14 +481,14 @@ function inject_data(id) {
 	game.bits -= add
 	game.files[id].bits += add
 	game.statistics.bits_injected += add
-	if (game.computers.unlocked) if (is_autobuyer_on(id + 13)) if (game.computers[id].exp + game.files[id].bits > get_level_requirement(id)) {
-		game.computers.file_selected = id
-		computer_dissolve(id)
-	}
+	if (game.computers.unlocked) if (is_autobuyer_on(id + 13)) if (game.computers[id].exp + game.files[id].bits > get_level_requirement(id) && !game.computers[id].is_server) computer_dissolve(id, true)
 	update_file(id)
-	document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 	if (game.options.locked_bits_production) document.getElementById("produce_bits").textContent = "Producing"
-	if (tab_name == "computers") document.getElementById("select_file_" + id).innerHTML = "File #" + id + "<br>" + format(game.files[id].bits) + " bits"
+	if (tab_name == "files") document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
+	if (tab_name == "computers") {
+		if (game.computers.unlocked) update_select_file_button(id)
+		else document.getElementById("total_file_boost_computers").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
+	}
 	if (tab_name == "statistics") update_tab_on_switch("statistics")
 }
 
@@ -507,35 +519,59 @@ function unlock_computers() {
 }
 
 function select_file(id) {
-	if (game.files[id] == 0) return
+	if (game.files[id].bits == 0 && (!game.computers.servers_unlocked || game.files[id].words == 0)) return
 	game.computers.file_selected = id
 	document.getElementById("file_selected").innerHTML = "<b>File selected</b>: #" + id
 }
 
+function update_select_file_button(file) {
+	if (tab_name != "computers") return
+	var msg = "File #" + file + "<br>" + format(game.files[file].bits) + " bits"
+	if (game.computers.servers_unlocked) msg += "<br>" + format(game.files[file].words) + " words"
+	document.getElementById("select_file_" + file).innerHTML = msg
+}
+
 function update_computer(id) {
 	if (tab_name != "computers") return
-	document.getElementById("computer_" + id).innerHTML = "Computer #" + id + "<br>Multiplier: " + format(Math.pow(2, Math.sqrt(game.computers[id].level / 8)), 1) + "x<br>Level: " + game.computers[id].level + "<br>EXP: " + format(game.computers[id].exp) + "<br>Next: " + format(get_level_requirement(id))
+	var msg = (game.computers[id].is_server ? "Server" : "Computer") + " #" + id
+	if (game.computers[id].is_server) msg += ""
+	else if (game.computers[id].level > 0 || !game.computers.servers_unlocked) msg += "<br>Multiplier: " + format(Math.pow(2, Math.sqrt(game.computers[id].level) * data.computer_strength), 1) + "x"
+	msg += "<br>Level: " + game.computers[id].level
+	if (game.computers[id].is_server) msg += "<br>SXP: " + format(game.computers[id].sxp) + "<br>Next: " + format(get_server_requirement(id))
+	else {
+		msg += "<br>EXP: " + format(game.computers[id].exp)
+		if (game.computers[id].level == 0 && game.computers.servers_unlocked) msg += " | SXP: " + format(game.computers[id].sxp)
+		msg += "<br>Next: " + format(get_level_requirement(id))
+		if (game.computers[id].level == 0 && game.computers.servers_unlocked) msg += " EXP<br>To server: 512 SXP"
+	}
+	document.getElementById("computer_" + id).innerHTML = msg
+	document.getElementById("computer_" + id + "_button_secondary").style.display = game.computers[id].level > 0 || !game.computers.servers_unlocked ? "none" : ""
 }
 
 function get_level_requirement(comp) {
 	return Math.pow(2, game.computers[comp].level + 24)
 }
 
-function computer_dissolve(comp) {
-	if (game.computers.file_selected == null) return
-	game.computers[comp].exp += game.files[game.computers.file_selected].bits
-	game.statistics.total_exp += game.files[game.computers.file_selected].bits
-	game.files[game.computers.file_selected].bits = 0
+function computer_dissolve(comp, auto) {
+	var selected = auto ? comp : game.computers.file_selected
+	if (!auto && game.computers.file_selected == null) return
+	if (game.computers[comp].is_server) return
+	game.computers[comp].exp += game.files[selected].bits
+	game.statistics.total_exp += game.files[selected].bits
+	game.files[selected].bits = 0
 	game.statistics.files_dissolved++
-	document.getElementById("select_file_" + game.computers.file_selected).innerHTML = "File #" + game.computers.file_selected + "<br>0 bits"
-	update_file(game.computers.file_selected)
-	game.computers.file_selected = null
-	document.getElementById("file_selected").innerHTML = "<b>File selected</b>: None"
-	if (game.computers[comp].exp >= get_level_requirement(comp)) {
-		var add = Math.floor(Math.log10(game.computers[comp].exp / get_level_requirement(comp)) / Math.log10(2) + 1)
+	update_select_file_button(selected)
+	update_file(selected)
+	if (!auto) {
+		game.computers.file_selected = null
+		document.getElementById("file_selected").innerHTML = "<b>File selected</b>: None"
+	}
+	var req = get_level_requirement(comp)
+	if (game.computers[comp].exp >= req) {
+		var add = Math.floor(Math.log10(game.computers[comp].exp / req + 1) / Math.log10(2))
+		game.computers[comp].exp = Math.max(game.computers[comp].exp - (Math.pow(2, add) - 1) * req, 0)
 		game.computers[comp].level += add
 		game.statistics.total_levelups += add
-		game.computers[comp].exp = 0
 		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
 		if (tab_name == "transfer") {
 			var total = 0
@@ -543,14 +579,34 @@ function computer_dissolve(comp) {
 			document.getElementById("total_computer_levels").innerHTML = "<b>Total computer levels</b>: " + total
 		}
 	}
+	if (tab_name == "upgrades") {
+		update_upgrade(1)
+		update_upgrade(3)
+	}
 	if (tab_name == "statistics") update_tab_on_switch("statistics")
 	update_computer(comp)
 }
 
+function primary_computer_dissolve(comp) {
+	if (game.computers[comp].is_server) dissolve_for_sxp(comp)
+	else computer_dissolve(comp)
+}
+
 function get_total_computer_boost() {
 	var product = 1
-	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) product *= Math.pow(2, Math.sqrt(game.computers[comp].level / 8))
+	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) if (!game.computers[comp].is_server) product *= Math.pow(2, Math.sqrt(game.computers[comp].level) * data.computer_strength)
 	return product
+}
+
+function update_computers_data() {
+	data.computer_strength = 1
+	data.normal_computers = 4
+	for (var comp=1; comp<5; comp++) if (game.computers[comp].is_server) {
+		data.computer_strength += Math.pow(game.computers[comp].level, 0.25)
+		data.normal_computers--
+	}
+	if (data.normal_computers < 3) data.computer_strength *= (1 - Math.abs(data.normal_computers - 2) / 2)
+	data.computer_strength *= 2 / data.normal_computers / Math.sqrt(2)
 }
 
 //Stage 1-4: Transfer
@@ -560,8 +616,12 @@ function get_words_gain() {
 
 function transfer() {
 	var total = 0
-	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) total += game.computers[comp].level
-	if (total < 160) return
+	var transfer_requirement = 160
+	if (game.computers.unlocked) for (var comp=1; comp<5; comp++) {
+		if (game.computers[comp].is_server) transfer_requirement -= 40
+		else total += game.computers[comp].level
+	}
+	if (total < transfer_requirement) return
 	var add = get_words_gain()
 	if (add < 1) return
 	if (game.statistics.times_transfer == 0) update_autobuyers()
@@ -574,21 +634,24 @@ function transfer() {
 	game.bits = 0
 	game.bytes = 0
 	game.upgrades = [0,0,0]
-	game.files.unlocked = false
-	game.computers.unlocked = false
+	if (game.files.unlocked === true) game.files.unlocked = false
+	if (game.computers.unlocked === true) game.computers.unlocked = false
 	for (var file=1; file<9; file++) game.files[file].bits = 0
-	for (var comp=1; comp<5; comp++) game.computers[comp] = {exp: 0, level: 0}
+	for (var comp=1; comp<5; comp++) game.computers[comp] = {exp: 0, level: 0, sxp: 0, is_server: false}
 	game.transfer.words_gain_rate_peak = 0
+	document.getElementById("total_computer_levels").innerHTML = "<b>Total computer levels</b>: 0"
+	update_computers_data()
 	update_words()
 	if (is_autobuyer_on(1)) produce("bits")
 	if (tab_name == "statistics") update_tab_on_switch("statistics")
+	if (game.statistics.fastest_transfer < 10) get_feat(1)
 }
 
 function update_words() {
 	if (game.statistics.times_transfer > 0) {
 		document.getElementById("words_div").style.display = ""
 		document.getElementById("words").innerHTML = "<b>Words</b>: " + format(game.transfer.words)
-		document.getElementById("words_multiplier").textContent = format(get_words_boost(), 1) + "x on bit & byte productions"
+		document.getElementById("words_multiplier").textContent = format(get_words_boost(), 1) + "x on productions & bit capacity"
 		document.getElementById("automation").style.display = ""
 	} else {
 		document.getElementById("words_div").style.display = "none"
@@ -609,6 +672,19 @@ function inject_words(id) {
 	game.statistics.words_injected += add
 	update_words()
 	update_file(id)
+	document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
+}
+
+function inject_equally() {
+	for (var file=1; file<9; file++) {
+		var add = Math.ceil(Math.floor(game.transfer.words) / (9 - file))
+		if (add == 0) break
+		game.transfer.words -= add
+		game.files[file].words += add
+		game.statistics.words_injected += add
+		update_file(file)
+	}
+	update_words()
 	document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 }
 
@@ -649,4 +725,78 @@ function toggle_autobuyer(autobuyer) {
 function is_autobuyer_on(autobuyer) {
 	if (autobuyer > game.transfer.autobuyers_unlocked) return false
 	return game.transfer.automation[autobuyer]
+}
+
+function perm_unlock_files() {
+	if (game.transfer.words < 16) return
+	game.transfer.words -= 16
+	game.files.unlocked = 2
+	update_tab_on_switch("files")
+	update_words()
+}
+
+function perm_unlock_computers() {
+	if (game.transfer.words < 256) return
+	game.transfer.words -= 256
+	game.computers.unlocked = 2
+	update_tab_on_switch("computers")
+	update_words()
+}
+
+//Stage 1-5: Servers
+function unlock_servers() {
+	if (game.transfer.words < 512) return
+	game.transfer.words -= 512
+	game.computers.servers_unlocked = true
+	update_tab_on_switch("computers")
+	update_words()
+	document.getElementById("tab_button_feats").style.display = ""
+	if (game.statistics.fastest_transfer < 10) game.feats.achieved.push(1)
+}
+
+function get_server_requirement(comp) {
+	return Math.pow(2, game.computers[comp].level + 9)
+}
+
+function dissolve_for_sxp(comp) {
+	if (game.computers.file_selected == null) return
+	if (!game.computers[comp].is_server && game.computers[comp].level > 0) return
+	var add = game.files[game.computers.file_selected].words
+	game.transfer.words += add
+	game.files[game.computers.file_selected].words = 0
+	game.computers[comp].sxp += add
+	game.statistics.files_dissolved++
+	game.statistics.total_sxp += add
+	update_select_file_button(comp)
+	var req = get_server_requirement(comp)
+	if (game.computers[comp].sxp >= req) {
+		var add = Math.floor(Math.log10(game.computers[comp].sxp / req + 1) / Math.log10(2))
+		game.computers[comp].sxp = Math.max(game.computers[comp].sxp - (Math.pow(2, add) - 1) * req, 0)
+		if (!game.computers[comp].is_server) {
+			game.computers[comp].is_server = true
+			game.statistics.servers_made++
+		}
+		game.computers[comp].level += add
+		game.statistics.total_levelups += add
+		update_computers_data()
+		for (var comp2=1; comp2<5; comp2++) if (!game.computers[comp2].is_server) update_computer(comp2)
+		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
+		if (tab_name == "transfer") {
+			var total = 0
+			if (game.computers.unlocked) for (var comp=1; comp<5; comp++) total += game.computers[comp].level
+			document.getElementById("total_computer_levels").innerHTML = "<b>Total computer levels</b>: " + total
+		}
+	}
+	update_computer(comp)
+	update_words()
+}
+
+function get_feat(id) {
+	if (!game.computers.servers_unlocked) return
+	if (game.feats.achieved.includes(id)) return
+	game.feats.achieved.push(id)
+	game.feats.notifications++
+	document.getElementById("feat_achieved").style.opacity = 1
+	setTimeout(function(){document.getElementById("feat_achieved").style.opacity = 0;}, 5000)
+	document.getElementById("tab_button_feats").textContent = "Feats (" + game.feats.notifications + ")"
 }

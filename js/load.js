@@ -9,10 +9,11 @@ function load_game(save_file) {
 		update_save(safe_save)
 		stop_interval()
 		game = safe_save
-		produce(game.production)
+		produce(game.production, true)
 		update_tab_buttons()
 		update_theme()
 		if (tab_name == "options") update_tab_on_switch("options")
+		update_computers_data()
 		update_words()
 		if (!game.options.offline_progress) game.lastTick = new Date().getTime()
 	}
@@ -60,7 +61,20 @@ function update_save(save_file) {
 		save_file.options.offline_progress = true
 		save_file.options.locked_bits_production = false
 	}
-	save_file.version = "0.1.4.1"
+	if (compare_version(save_file.version, "0.1.5.0")) {
+		save_file.computers.servers_unlocked = false
+		for (var comp=1; comp<5; comp++) {
+			save_file.computers[comp].sxp = 0
+			save_file.computers[comp].is_server = false
+		}
+		save_file.statistics.total_sxp = 0
+		save_file.statistics.servers_made = 0
+		save_file.feats = {
+			achieved: [],
+			notifications: 0
+		}
+	}
+	save_file.version = "0.1.5.0"
 }
 
 function compare_version(ver1, ver2) {
@@ -107,6 +121,7 @@ function hard_reset() {
 	update_tab_buttons()
 	update_theme()
 	update_tab_on_switch("options")
+	update_computers_data()
 	update_words()
 	start_interval()
 }

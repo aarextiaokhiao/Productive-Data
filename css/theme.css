@@ -109,13 +109,13 @@ button:hover {
 	width: 180px;
 	height: 90px
 }
-#tab_statistics table {
+.table_tab table {
 	width: 720px
 }
-#tab_statistics tr {
+.table_tab tr {
 	height: 24px
 }
-#tab_statistics td:nth-child(1) {
+.table_tab td:nth-child(1) {
 	min-width: 360px;
 	width: 360px;
 	max-width: 360px;
@@ -123,7 +123,7 @@ button:hover {
 	font-weight: bold;
 	text-align: left
 }
-#tab_statistics td:nth-child(2) {
+.table_tab td:nth-child(2) {
 	min-width: 360px;
 	width: 360px;
 	max-width: 360px;
@@ -170,8 +170,16 @@ button:hover {
 	width: 180px
 }
 .select_file_button {
-	height: 60px;
-	width: 180px;
+	height: 90px;
+	width: 210px;
+}
+.computer {
+	position: relative;
+	width: 360px;
+	height: 210px;
+	display: inline-block;
+	border: 2px solid var(--color);
+	margin: 2px
 }
 #transfer {
 	height: 90px;
@@ -186,4 +194,16 @@ button:hover {
 .automation_upgrade_button {
 	width: 300px;
 	height: 90px
+}
+#feat_achieved {
+	position: absolute;
+	left: 4px;
+	bottom: 4px;
+	background: var(--background);
+	opacity: 0;
+	border: 2px solid var(--color);
+	width: 360px;
+	height: 60px;
+	z-index: 1;
+	transition-duration: 0.2s
 }

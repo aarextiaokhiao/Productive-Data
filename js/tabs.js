@@ -20,9 +20,11 @@ function update_tab_on_switch(id) {
 				document.getElementById("inject_words_" + file).style.display = game.statistics.times_transfer > 0 ? "" : "none"
 			}
 			document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
+			document.getElementById("inject_equally_button").style.display = game.statistics.times_transfer > 0 ? "" : "none"
 		} else {
 			document.getElementById("tab_locked_files").style.display = "block"
 			document.getElementById("tab_unlocked_files").style.display = "none"
+			document.getElementById("perm_unlock_files").style.display = game.statistics.times_transfer > 0 ? "" : "none"
 		}
 	}
 	if (id == "computers") {
@@ -30,13 +32,15 @@ function update_tab_on_switch(id) {
 			document.getElementById("tab_locked_computers").style.display = "none"
 			document.getElementById("tab_unlocked_computers").style.display = "block"
 			document.getElementById("file_selected").innerHTML = "<b>File selected</b>: " + (game.computers.file_selected ? "#" + game.computers.file_selected : "None")
-			for (var file=1; file<9; file++) document.getElementById("select_file_" + file).innerHTML = "File #" + file + "<br>" + format(game.files[file].bits) + " bits"
+			for (var file=1; file<9; file++) update_select_file_button(file)
 			for (var comp=1; comp<5; comp++) update_computer(comp)
 			document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
+			document.getElementById("unlock_servers").style.display = game.computers.servers_unlocked || game.statistics.times_transfer == 0 ? "none" : ""
 		} else {
 			document.getElementById("tab_locked_computers").style.display = "block"
 			document.getElementById("tab_unlocked_computers").style.display = "none"
 			document.getElementById("total_file_boost_computers").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
+			document.getElementById("perm_unlock_computers").style.display = game.statistics.times_transfer > 0 ? "" : "none"
 		}
 	}
 	if (id == "transfer") {
@@ -80,6 +84,20 @@ function update_tab_on_switch(id) {
 			document.getElementById("total_words_row").style.display = "none"
 			document.getElementById("words_injected_row").style.display = "none"
 		}
+		if (game.computers.servers_unlocked) {
+			document.getElementById("total_sxp_row").style.display = ""
+			document.getElementById("servers_made_row").style.display = ""
+			document.getElementById("total_sxp").textContent = format(game.statistics.total_sxp)
+			document.getElementById("servers_made").textContent = format(game.statistics.servers_made)
+		} else {
+			document.getElementById("total_sxp_row").style.display = "none"
+			document.getElementById("servers_made_row").style.display = "none"
+		}
+	}
+	if (id == "feats") {
+		game.feats.notifications = 0
+		document.getElementById("tab_button_feats").textContent = "Feats"
+		document.getElementById("feat_1").textContent = game.feats.achieved.includes(1) ? "Completed" : "Not completed"
 	}
 	if (id == "options") {
 		document.getElementById("auto_save").textContent = "Auto save: " + (game.options.auto_save ? "ON" : "OFF")
@@ -96,6 +114,8 @@ function update_tab_on_switch(id) {
 function update_tab_buttons() {
 	document.getElementById("tab_button_computers").style.display = game.files.unlocked || game.statistics.times_transfer > 0 ? "" : "none"
 	document.getElementById("tab_button_transfer").style.display = game.computers.unlocked || game.statistics.times_transfer > 0 ? "" : "none"
+	document.getElementById("tab_button_feats").style.display = game.computers.servers_unlocked ? "" : "none"
+	document.getElementById("tab_button_feats").textContent = "Feats" + (game.feats.notifications > 0 ? " (" + game.feats.notifications + ")" : "")
 }
 
 function open_theme_menu() {
