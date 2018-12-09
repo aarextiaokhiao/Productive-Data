@@ -74,7 +74,7 @@ function update_save(save_file) {
 			notifications: 0
 		}
 	}
-	save_file.version = "0.1.5.0"
+	save_file.version = "0.1.5.1"
 }
 
 function compare_version(ver1, ver2) {

@@ -52,7 +52,7 @@ function get_default_player() {
 			},
 			locked_bits_production: false
 		},
-		version: "0.1.5.0",
+		version: "0.1.5.1",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = {bits: 0, words: 0}
@@ -72,8 +72,6 @@ function game_tick() {
 	game.statistics.playtime += diff
 	game.statistics.time_this_transfer += diff
 
-	game.transfer.words = Math.max(get_words_gain(), 1e3)
-	for (var file=1; file<9; file++) game.files[file].words = game.transfer.words
 	if (game.production && can_produce(game.production)) {
 		if (game.production == "bits") {
 			var add = Math.min(get_bit_production() * diff, get_bit_capacity() - game.bits)
