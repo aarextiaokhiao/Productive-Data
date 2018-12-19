@@ -28,13 +28,15 @@ function get_default_player() {
 			files_dissolved: 0,
 			total_exp: 0,
 			total_levelups: 0,
+			total_computer_levelups: 0,
 			times_transfer: 0,
 			time_this_transfer: 0,
 			fastest_transfer: 1/0,
 			total_words: 0,
 			words_injected: 0,
 			total_sxp: 0,
-			servers_made: 0
+			servers_made: 0,
+			total_server_levelups: 0
 		},
 		feats: {
 			achieved: [],
@@ -52,7 +54,7 @@ function get_default_player() {
 			},
 			locked_bits_production: false
 		},
-		version: "0.1.5.2",
+		version: "0.1.5.3",
 		lastTick: new Date().getTime()
 	}
 	for (var id=1; id<9; id++) default_player.files[id] = {bits: 0, words: 0}
@@ -110,11 +112,16 @@ function game_tick() {
 	document.getElementById("bits_production").innerHTML = format(get_bit_production(), 1) + "/s"
 	document.getElementById("bytes").innerHTML = "<b>Bytes</b>: " + format(game.bytes)
 	document.getElementById("bytes_production").innerHTML = format(get_byte_production(), 1) + "/s"
+	if (game.statistics.times_transfer > 0) document.getElementById("words").innerHTML = "<b>Words</b>: " + format(game.transfer.words) + (total >= transfer_requirement && words_gain > 0 ? " (+" + format(words_gain) + ")" :  "")
 	
 	if (tab_name == "transfer") {
+		document.getElementById("next_word_gain").textContent = ""
 		if (total < transfer_requirement) document.getElementById("transfer").textContent = "You need " + (transfer_requirement - total) + " more levels to transfer."
 		else if (game.statistics.times_transfer == 0) document.getElementById("transfer").textContent = "Reset the game and transfer for words!"
-		else document.getElementById("transfer").innerHTML = "Transfer for " + format(words_gain) + " words.<br>" + format(words_gain_rate / 60, 1) + "/min<br>Peak: " + format(game.transfer.words_gain_rate_peak / 60, 1) + "/min"
+		else {
+			document.getElementById("transfer").innerHTML = "Transfer for " + format(words_gain) + " words.<br>" + format(words_gain_rate / 60, 1) + "/min<br>Peak: " + format(game.transfer.words_gain_rate_peak / 60, 1) + "/min"
+			if (words_gain < 128) document.getElementById("next_word_gain").innerHTML = "<b>Bytes left for next word gain for your next transfer</b>: " + format(Math.pow((words_gain + 1) * 128, 8) - game.bytes)
+		}
 	}
 	if (tab_name == "statistics") {
 		document.getElementById("playtime").textContent = format_time(game.statistics.playtime)
@@ -379,7 +386,7 @@ function change_notation() {
 	else if (game.options.notation == "Standard") game.options.notation = "Letters"
 	else if (game.options.notation == "Letters") game.options.notation = "Scientific"
 	else return
-	update_words()
+	update_words_display()
 	document.getElementById("notation").textContent = "Notation: " + game.options.notation
 }
 
@@ -580,6 +587,7 @@ function computer_dissolve(comp, auto) {
 		game.computers[comp].exp = Math.max(game.computers[comp].exp - (Math.pow(2, add) - 1) * req, 0)
 		game.computers[comp].level += add
 		game.statistics.total_levelups += add
+		game.statistics.total_computer_levelups += add
 		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
 		if (tab_name == "transfer") {
 			var total = 0
@@ -633,6 +641,7 @@ function transfer() {
 	var add = get_words_gain()
 	if (add < 1) return
 	if (game.statistics.times_transfer == 0) update_autobuyers()
+	if (data.normal_computers == 3) get_feat(2)
 	produce()
 	game.statistics.times_transfer++
 	game.statistics.fastest_transfer = Math.min(game.statistics.time_this_transfer, game.statistics.fastest_transfer)
@@ -649,16 +658,15 @@ function transfer() {
 	game.transfer.words_gain_rate_peak = 0
 	document.getElementById("total_computer_levels").innerHTML = "<b>Total computer levels</b>: 0"
 	update_computers_data()
-	update_words()
+	update_words_display()
 	if (is_autobuyer_on(1)) produce("bits")
 	if (tab_name == "statistics") update_tab_on_switch("statistics")
 	if (game.statistics.fastest_transfer < 10) get_feat(1)
 }
 
-function update_words() {
+function update_words_display() {
 	if (game.statistics.times_transfer > 0) {
 		document.getElementById("words_div").style.display = ""
-		document.getElementById("words").innerHTML = "<b>Words</b>: " + format(game.transfer.words)
 		document.getElementById("words_multiplier").textContent = format(get_words_boost(), 1) + "x on productions & bit capacity"
 		document.getElementById("automation").style.display = ""
 	} else {
@@ -678,7 +686,7 @@ function inject_words(id) {
 	game.transfer.words = Math.max(game.transfer.words - add, 0)
 	game.files[id].words += add
 	game.statistics.words_injected += add
-	update_words()
+	update_words_display()
 	update_file(id)
 	document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 }
@@ -687,14 +695,14 @@ function inject_equally() {
 	if (game.transfer.words < 1) return
 	if (game.transfer.words < 8) if (!confirm("I recommend you to get more words. But, are you sure you want to do so?")) return
 	for (var file=1; file<9; file++) {
-		var add = Math.ceil(Math.floor(game.transfer.words) / (9 - file))
-		if (add == 0) break
-		game.transfer.words -= Math.max(game.transfer.words - add, 0)
+		var add = Math.ceil(game.transfer.words / (9 - file))
+		game.transfer.words = Math.max(game.transfer.words - add, 0)
 		game.files[file].words += add
 		game.statistics.words_injected += add
 		update_file(file)
+		if (game.transfer.words == 0) break
 	}
-	update_words()
+	update_words_display()
 	document.getElementById("total_file_boost").innerHTML = "<b>Total multiplier on bit and byte productions</b>: " + format(get_total_file_boost(), 1) + "x"
 }
 
@@ -723,7 +731,7 @@ function buy_autobuyer() {
 	game.transfer.words -= get_autobuyer_cost()
 	game.transfer.autobuyers_unlocked++
 	game.transfer.automation[game.transfer.autobuyers_unlocked] = true
-	update_words()
+	update_words_display()
 	update_autobuyers()
 }
 
@@ -742,7 +750,7 @@ function perm_unlock_files() {
 	game.transfer.words -= 16
 	game.files.unlocked = 2
 	update_tab_on_switch("files")
-	update_words()
+	update_words_display()
 }
 
 function perm_unlock_computers() {
@@ -750,7 +758,7 @@ function perm_unlock_computers() {
 	game.transfer.words -= 256
 	game.computers.unlocked = 2
 	update_tab_on_switch("computers")
-	update_words()
+	update_words_display()
 }
 
 //Stage 1-5: Servers
@@ -759,7 +767,7 @@ function unlock_servers() {
 	game.transfer.words -= 512
 	game.computers.servers_unlocked = true
 	update_tab_on_switch("computers")
-	update_words()
+	update_words_display()
 	document.getElementById("tab_button_feats").style.display = ""
 	if (game.statistics.fastest_transfer < 10) game.feats.achieved.push(1)
 }
@@ -788,6 +796,7 @@ function dissolve_for_sxp(comp) {
 		}
 		game.computers[comp].level += add
 		game.statistics.total_levelups += add
+		game.statistics.total_server_levelups += add
 		update_computers_data()
 		for (var comp2=1; comp2<5; comp2++) if (!game.computers[comp2].is_server) update_computer(comp2)
 		document.getElementById("total_computer_boost").innerHTML = "<b>Total multiplier discount on upgrades 1 and 3</b>: " + format(get_total_computer_boost(), 1) + "x"
@@ -798,10 +807,10 @@ function dissolve_for_sxp(comp) {
 		}
 	}
 	update_computer(comp)
-	update_words()
+	update_words_display()
 }
 
-var feat_descs = [null, "Transfer in under 10 seconds."]
+var feat_descs = [null, "Transfer in under 10 seconds.", "Transfer with 1 server used."]
 var feat_disappear_timeout
 function get_feat(id) {
 	if (!game.computers.servers_unlocked) return

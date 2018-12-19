@@ -14,7 +14,7 @@ function load_game(save_file) {
 		update_theme()
 		if (tab_name == "options") update_tab_on_switch("options")
 		update_computers_data()
-		update_words()
+		update_words_display()
 		if (!game.options.offline_progress) game.lastTick = new Date().getTime()
 	}
 }
@@ -74,10 +74,13 @@ function update_save(save_file) {
 			notifications: 0
 		}
 	}
-	if (compare_version(save_file.version, "0.1.5.2")) {
-		save_file.bits = Math.max(save_file.bits, 0)
+	if (compare_version(save_file.version, "0.1.5.2")) save_file.bits = Math.max(save_file.bits, 0)
+	if (compare_version(save_file.version, "0.1.5.3")) {
+		save_file.statistics.total_server_levelups = 0
+		for (var comp=1; comp<4; comp++) if (save_file.computers[comp].is_server) save_file.statistics.total_server_levelups += save_file.computers[comp].level
+		save_file.statistics.total_computer_levelups = save_file.statistics.total_levelups - save_file.statistics.total_server_levelups
 	}
-	save_file.version = "0.1.5.2"
+	save_file.version = "0.1.5.3"
 }
 
 function compare_version(ver1, ver2) {
@@ -125,6 +128,6 @@ function hard_reset() {
 	update_theme()
 	update_tab_on_switch("options")
 	update_computers_data()
-	update_words()
+	update_words_display()
 	start_interval()
 }

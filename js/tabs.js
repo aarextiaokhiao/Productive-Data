@@ -51,7 +51,7 @@ function update_tab_on_switch(id) {
 		if (game.statistics.times_transfer > 0) update_autobuyers()
 	}
 	if (id == "statistics") {
-		document.getElementById("total_upgrades").textContent = game.statistics.total_upgrades
+		document.getElementById("total_upgrades").textContent = format(game.statistics.total_upgrades)
 		if (game.files.unlocked) {
 			document.getElementById("bits_injected_row").style.display = ""
 			document.getElementById("bits_injected").textContent = format(game.statistics.bits_injected)
@@ -60,9 +60,9 @@ function update_tab_on_switch(id) {
 			document.getElementById("files_dissolved_row").style.display = ""
 			document.getElementById("total_exp_row").style.display = ""
 			document.getElementById("total_levelups_row").style.display = ""
-			document.getElementById("files_dissolved").textContent = game.statistics.files_dissolved
+			document.getElementById("files_dissolved").textContent = format(game.statistics.files_dissolved)
 			document.getElementById("total_exp").textContent = format(game.statistics.total_exp)
-			document.getElementById("total_levelups").textContent = game.statistics.total_levelups
+			document.getElementById("total_levelups").textContent = format(game.statistics.total_levelups)
 		} else {
 			document.getElementById("files_dissolved_row").style.display = "none"
 			document.getElementById("total_exp_row").style.display = "none"
@@ -86,13 +86,19 @@ function update_tab_on_switch(id) {
 			document.getElementById("words_injected_row").style.display = "none"
 		}
 		if (game.computers.servers_unlocked) {
+			document.getElementById("total_computer_levelups_row").style.display = ""
 			document.getElementById("total_sxp_row").style.display = ""
 			document.getElementById("servers_made_row").style.display = ""
+			document.getElementById("total_server_levelups_row").style.display = ""
+			document.getElementById("total_computer_levelups").textContent = format(game.statistics.total_computer_levelups)
 			document.getElementById("total_sxp").textContent = format(game.statistics.total_sxp)
 			document.getElementById("servers_made").textContent = format(game.statistics.servers_made)
+			document.getElementById("total_server_levelups").textContent = game.statistics.total_server_levelups
 		} else {
+			document.getElementById("total_computer_levelups_row").style.display = "none"
 			document.getElementById("total_sxp_row").style.display = "none"
 			document.getElementById("servers_made_row").style.display = "none"
+			document.getElementById("total_server_levelups_row").style.display = "none"
 		}
 	}
 	if (id == "feats") {

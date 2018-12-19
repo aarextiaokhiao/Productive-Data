@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>Productive Data v0.1.5.2</title>
+		<title>Productive Data v0.1.5.3</title>
 		<link rel="stylesheet" type="text/css" href="css/theme.css">
 		<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
 		<script type="text/javascript" src="js/core.js"></script>
@@ -113,6 +113,7 @@
 					Transferring resets all of your bits, bytes, upgrades, files, and computers, but you will gain words based on your bytes. You need to get 160 total computer levels to transfer.
 					<div id="total_computer_levels"></div>
 					<button id="transfer" onclick="transfer()"></button>
+					<div id="next_word_gain"></div>
 					<div id="automation">
 						<button class="automation_upgrade_button" id="buy_autobuyer" onclick="buy_autobuyer()"></button><br>
 					</div>
@@ -151,6 +152,10 @@
 							<td>Total level ups:</td>
 							<td id="total_levelups">0</td>
 						</tr>
+						<tr id="total_computer_levelups_row">
+							<td>Total computer level ups:</td>
+							<td id="total_computer_levelups">0</td>
+						</tr>
 						<tr id="times_transfer_row">
 							<td>Times transferred:</td>
 							<td id="times_transfer">0</td>
@@ -179,12 +184,14 @@
 							<td>Total servers made:</td>
 							<td id="servers_made">0</td>
 						</tr>
+						<tr id="total_server_levelups_row">
+							<td>Total server level ups:</td>
+							<td id="total_server_levelups">0</td>
+						</tr>
 					</table>
 				</div>
 				<div class="tab table_tab" id="tab_feats">
 					<table id="feats" align=center>
-						<tr>
-						</tr>
 					</table>
 				</div>
 				<div class="tab" id="tab_options">
@@ -230,7 +237,7 @@
 					</tr></table>
 				</div>
 				<div class="tab" id="tab_about">
-					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>v0.1.5.2<br><br>
+					<b style='font-size: 48px'>Productive Data</b><br>Created by Aarex Tiaokhiao<br>v0.1.5.3<br><br>
 					<a href="https://aarextiaokhiao.github.io/">Home</a><br>
 					<a href="changelog.html">Changelog</a><br>
 					<a href="http://discord.gg/wPRtzau">Discord</a>
