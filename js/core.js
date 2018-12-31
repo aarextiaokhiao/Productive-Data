@@ -676,7 +676,7 @@ function update_words_display() {
 }
 
 function get_words_boost() {
-	if (game.statistics.times_transfer > 0) return Math.log10(game.transfer.words * 4 + 1) + 1
+	if (game.statistics.times_transfer > 0) return Math.log10(game.statistics.total_words * 4 + 1) + 1
 	return 1
 }
 
